@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro de Tarefas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<!-- Menu superior -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="index.html">Gerenciamento de Tarefas</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="index.html">Cadastro de Usuários</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="#">Cadastro de Tarefas</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="gerenciamentotarefas.html">Gerenciar Tarefas</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<!-- Conteúdo principal -->
+<div class="container mt-4">
+    <h2>Cadastro de Tarefas</h2>
+    <form id="taskForm" class="mt-4">
+        <div class="mb-3">
+            <label for="descricao" class="form-label">Descrição:</label>
+            <input type="text" class="form-control" id="descricao" placeholder="Digite a descrição da tarefa">
+        </div>
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <label for="setor" class="form-label">Setor:</label>
+                <input type="text" class="form-control" id="setor" placeholder="Digite o setor">
+            </div>
+            <div class="col-md-4 mb-3">
+                <label for="usuario" class="form-label">Usuário:</label>
+                <select class="form-select" id="usuario">
+                    <option value="">Selecione</option>
+                </select>
+            </div>
+            <div class="col-md-4 mb-3">
+                <label for="prioridade" class="form-label">Prioridade:</label>
+                <select class="form-select" id="prioridade">
+                    <option value="ALTA">Alta</option>
+                    <option value="MEDIA">Média</option>
+                    <option value="BAIXA">Baixa</option>
+                </select>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary">Cadastrar</button>
+    </form>
+</div>
+
+<!-- Modal de Tarefa Cadastrada -->
+<div class="modal fade" id="taskCreatedModal" tabindex="-1" aria-labelledby="taskCreatedModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="taskCreatedModalLabel">Tarefa Cadastrada</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <p>A tarefa foi cadastrada com sucesso!</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Tarefa Atualizada -->
+<div class="modal fade" id="taskUpdatedModal" tabindex="-1" aria-labelledby="taskUpdatedModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="taskUpdatedModalLabel">Tarefa Atualizada</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <p>A tarefa foi atualizada com sucesso!</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+
+    function loadTask(taskId) {
+    fetch(`http://localhost:8080/api/tasks/${taskId}`)
+        .then(response => {
+            if (!response.ok) throw new Error('Erro ao carregar a tarefa.');
+            return response.json();
+        })
+        .then(task => {
+            document.getElementById('descricao').value = task.description;
+            document.getElementById('setor').value = task.sector;
+            document.getElementById('prioridade').value = task.priority;
+            document.getElementById('usuario').value = task.user?.id || '';
+        })
+        .catch(error => {
+            console.error('Erro ao carregar a tarefa:', error);
+            alert('Erro ao carregar a tarefa.');
+        });
+}
+
+    function loadUsers() {
+        fetch('http://localhost:8080/api/users')
+            .then(response => response.json())
+            .then(users => {
+                const usuarioSelect = document.getElementById('usuario');
+                users.forEach(user => {
+                    const option = document.createElement('option');
+                    option.value = user.id;
+                    option.textContent = user.name;
+                    usuarioSelect.appendChild(option);
+                });
+            })
+            .catch(error => {
+                console.error('Erro ao carregar usuários:', error);
+            });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const params = new URLSearchParams(window.location.search);
+        const taskId = params.get('taskId');
+
+        loadUsers();
+
+        if (taskId) {
+            loadTask(taskId);
+        }
+    });
+
+    function loadTask(taskId) {
+        fetch(`http://localhost:8080/api/tasks/${taskId}`)
+            .then(response => {
+                if (!response.ok) throw new Error('Erro ao carregar a tarefa.');
+                return response.json();
+            })
+            .then(task => {
+                // Preenche o formulário com os dados da tarefa
+                document.getElementById('descricao').value = task.description;
+                document.getElementById('setor').value = task.sector;
+                document.getElementById('prioridade').value = task.priority;
+                document.getElementById('usuario').value = task.user?.id || '';
+            })
+            .catch(error => {
+                console.error('Erro ao carregar a tarefa:', error);
+                alert('Erro ao carregar a tarefa.');
+            });
+    }
+
+    document.getElementById('taskForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+
+        const descricao = document.getElementById('descricao').value;
+        const setor = document.getElementById('setor').value;
+        const usuario = document.getElementById('usuario').value;
+        const prioridade = document.getElementById('prioridade').value;
+
+        if (!usuario) {
+            alert("Selecione um usuário.");
+            return;
+        }
+
+        const params = new URLSearchParams(window.location.search);
+        const taskId = params.get('taskId');
+
+        const task = {
+            description: descricao,
+            sector: setor,
+            priority: prioridade
+        };
+
+        const method = taskId ? 'PUT' : 'POST';
+        const url = taskId
+            ? `http://localhost:8080/api/tasks/${taskId}?userId=${usuario}`
+            : `http://localhost:8080/api/tasks?userId=${usuario}`;
+
+        fetch(url, {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(task)
+        })
+        .then(response => {
+            if (!response.ok) throw new Error('Erro ao salvar a tarefa.');
+            return response.json();
+        })
+        .then(data => {
+            if (taskId) {
+                const modal = new bootstrap.Modal(document.getElementById('taskUpdatedModal'));
+                modal.show();
+            } else {
+                const modal = new bootstrap.Modal(document.getElementById('taskCreatedModal'));
+                modal.show();
+            }
+
+            setTimeout(() => {
+                window.location.href = 'gerenciamentotarefas.html';
+            }, 2000);
+        })
+        .catch(error => {
+            console.error('Erro ao salvar a tarefa:', error);
+            alert('Erro ao salvar a tarefa.');
+        });
+    });
+</script>
+</body>
+</html>
